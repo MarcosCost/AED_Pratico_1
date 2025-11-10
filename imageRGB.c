@@ -102,6 +102,9 @@ void ImageInit(void) {  ///
 
 // TIP: Search for PIXMEM or InstrCount to see where it is incremented!
 
+
+
+
 /// Auxiliary (static) functions
 
 static Image AllocateImageHeader(uint32 width, uint32 height) {
@@ -168,6 +171,10 @@ static int LUTAllocColor(Image img, rgb_t color) {
 static rgb_t GenerateNextColor(rgb_t color) {
   return (color + 7639) & 0xffffff;         // &0xffffff makes sure it only keeps the first 24 (6*4) bits if overflow occurs 
 }
+
+
+
+
 
 /// Image management functions
 
@@ -308,6 +315,9 @@ Image ImageCopy(const Image img) {
   return newImg;
 }
 
+
+
+
 /// Printing on the console
 
 /// These functions do not modify the image and never fail.
@@ -339,6 +349,8 @@ void ImageRAWPrint(const Image img) {
 
   printf("\n");
 }
+
+
 
 /// PBM file operations --- For BW images
 
@@ -461,6 +473,8 @@ int ImageSavePBM(const Image img, const char* filename) {  ///
   return 0;
 }
 
+
+
 /// PPM file operations --- For RGB images
 
 /// Load a raw PPM file.
@@ -541,6 +555,9 @@ int ImageSavePPM(const Image img, const char* filename) {
   return 0;
 }
 
+
+
+
 /// Information queries
 
 /// These functions do not modify the image and never fail.
@@ -563,6 +580,9 @@ uint16 ImageColors(const Image img) {
   return img->num_colors;
 }
 
+
+
+
 /// Image comparison
 
 /// These functions do not modify the images and never fail.
@@ -570,14 +590,67 @@ uint16 ImageColors(const Image img) {
 /// Check if img1 and img2 represent equal images.
 /// NOTE: The same rgb color may correspond to different LUT labels in
 /// different images!
+
+//returns 1 if equal
 int ImageIsEqual(const Image img1, const Image img2) {
   assert(img1 != NULL);
   assert(img2 != NULL);
 
-  // TO BE COMPLETED
-  // ...
 
-  return 0;
+  if (img1->height != img2->height || img2->width != img1->width)
+  {
+    return 0;
+  }
+
+
+/* Entendi mal a estrutura do DAT e fiz esta commom LUT pra ajudar na comparação, mas vou deixar aqui ate acabar o trabalho porque pode vir a ser util Ig
+
+  //Common LUT
+  rgb_t* LUT_commum = malloc(FIXED_LUT_SIZE * sizeof(rgb_t));
+  uint16 num_color_comm = 2;
+  LUT_commum[0] = 0xffffff;
+  LUT_commum[1] = 0x000000;
+
+  Image menor_lut = img1;
+  Image maior_lut = img2;
+  //Acertar variaveis
+  if (img1->num_colors > img2->num_colors)
+  {
+    menor_lut = img2;
+    maior_lut = img1;
+  }
+
+  for (size_t i = 2; i < menor_lut->num_colors; i++)
+  {
+    uint8 found = 0;
+
+    for (size_t j = 2; j < maior_lut->num_colors; j++)
+    {
+   
+        if (menor_lut->LUT[i] == maior_lut-> LUT[j])
+        {
+          LUT_commum[num_color_comm++] = menor_lut->LUT[i];
+          found=1;
+        }
+
+      if (found == 1) {break;}
+    
+    }
+  }
+*/
+  
+  //Check pixeis equal
+  for (size_t j = 0; j < img1->height; j++)
+  {
+    for (size_t i = 0; i < img2->width; i++)
+    {
+      if (img1->LUT[img1->image[j][i]] != img2->LUT[img2->image[j][i]]) {return 0;}
+    }
+    
+  }
+  
+
+  return 1;
 }
 
 int ImageIsDifferent(const Image img1, const Image img2) {
@@ -586,6 +659,9 @@ int ImageIsDifferent(const Image img1, const Image img2) {
 
   return !ImageIsEqual(img1, img2);
 }
+
+
+
 
 /// Geometric transformations
 
