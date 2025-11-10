@@ -166,7 +166,7 @@ static int LUTAllocColor(Image img, rgb_t color) {
 
 /// Return a pseudo-random successor of the given color.
 static rgb_t GenerateNextColor(rgb_t color) {
-  return (color + 7639) & 0xffffff;         // &0xffffff makes sure it woly keeps the first 24 (6*4) bits if overflow occurs 
+  return (color + 7639) & 0xffffff;         // &0xffffff makes sure it only keeps the first 24 (6*4) bits if overflow occurs 
 }
 
 /// Image management functions
@@ -284,8 +284,11 @@ void ImageDestroy(Image* imgp) {
 Image ImageCopy(const Image img) {
   assert(img != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  Image newImg = ImageCreate(img->width, img->height);
+
+  newImg->image = img ->image;
+  newImg->num_colors = img->num_colors;
+  newImg->LUT = img->LUT;
 
   return NULL;
 }
