@@ -11,8 +11,8 @@
 /// 2025
 
 // Student authors (fill in below):
-// NMec:
-// Name:
+// NMec:125882
+// Name:Marcos Costa
 // NMec:
 // Name:
 //
@@ -51,7 +51,7 @@
 struct image {
   uint32 width;
   uint32 height;
-  uint16** image;  // pointer to an array of pointers referencing the image rows
+  uint16** image;  // pointer to an array of pointers referencing the image rows    
   uint16 num_colors;  // the number of colors (i.e., pixel labels) used
   rgb_t* LUT;         // table storing (R,G,B) triplets
 };
@@ -166,7 +166,7 @@ static int LUTAllocColor(Image img, rgb_t color) {
 
 /// Return a pseudo-random successor of the given color.
 static rgb_t GenerateNextColor(rgb_t color) {
-  return (color + 7639) & 0xffffff;
+  return (color + 7639) & 0xffffff;         // &0xffffff makes sure it only keeps the first 24 (6*4) bits if overflow occurs 
 }
 
 /// Image management functions
@@ -284,10 +284,28 @@ void ImageDestroy(Image* imgp) {
 Image ImageCopy(const Image img) {
   assert(img != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  Image newImg = ImageCreate(img->width, img->height);
 
-  return NULL;
+  //copy uint16** image
+  for (uint32 i = 0; i < newImg->height; i++)
+  {
+    for (uint32 j = 0; j < newImg->width; j++)
+    {
+      newImg->image[i][j] = img->image[i][j];
+    }
+    
+  }
+
+  //copy num_colors
+  newImg->num_colors = img->num_colors;
+
+  //copy uint32* LUT
+  for (size_t i = 2; i < newImg->num_colors; i++)
+  {
+    newImg->LUT[i] = img->LUT[i];
+  }
+
+  return newImg;
 }
 
 /// Printing on the console
