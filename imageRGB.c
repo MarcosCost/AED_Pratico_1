@@ -286,7 +286,7 @@ Image ImageCopy(const Image img) {
 
   Image newImg = ImageCreate(img->width, img->height);
 
-  //copy image**
+  //copy uint16** image
   for (uint32 i = 0; i < newImg->height; i++)
   {
     for (uint32 j = 0; j < newImg->width; j++)
@@ -295,11 +295,15 @@ Image ImageCopy(const Image img) {
     }
     
   }
-    
 
-  //TODO: aparentemente n posso fzr isto segundo o deepseek, tenho q corrigir IG
+  //copy num_colors
   newImg->num_colors = img->num_colors;
-  newImg->LUT = img->LUT;
+
+  //copy uint32* LUT
+  for (size_t i = 2; i < newImg->num_colors; i++)
+  {
+    newImg->LUT[i] = img->LUT[i];
+  }
 
   return newImg;
 }
