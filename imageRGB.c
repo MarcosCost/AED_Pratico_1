@@ -728,10 +728,37 @@ int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
 
-  // TO BE COMPLETED
-  // ...
+  check(label<=img->num_colors,"ImageRegionFillingRecursive: Label is not defined in LUT");
 
-  return 0;
+  uint16 og_label = img->image[v][u];
+  uint16 labeled_p = 0;
+
+  //Caso ja seja a cor certa
+  if (og_label == label) return labeled_p;
+
+  img->image[v][u] = label;
+  labeled_p++;
+
+  //Recursividade
+  if (v+1 < img->height && img->image[v+1][u] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u, v+1, label);
+  }
+  if (v-1 >= 0 && img->image[v-1][u] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u, v-1, label);
+  }
+  if (u+1 < img->width && img->image[v][u+1] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u+1, v, label);
+  }
+  if (u-1 >= 0 && img->image[v][u-1] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u-1, v, label);
+  }
+
+
+  return labeled_p;
 }
 
 /// Region growing using a STACK of pixel coordinates to
