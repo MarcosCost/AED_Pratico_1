@@ -601,43 +601,6 @@ int ImageIsEqual(const Image img1, const Image img2) {
   {
     return 0;
   }
-
-
-/* Entendi mal a estrutura do DAT e fiz esta commom LUT pra ajudar na comparação, mas vou deixar aqui ate acabar o trabalho porque pode vir a ser util Ig
-
-  //Common LUT
-  rgb_t* LUT_commum = malloc(FIXED_LUT_SIZE * sizeof(rgb_t));
-  uint16 num_color_comm = 2;
-  LUT_commum[0] = 0xffffff;
-  LUT_commum[1] = 0x000000;
-
-  Image menor_lut = img1;
-  Image maior_lut = img2;
-  //Acertar variaveis
-  if (img1->num_colors > img2->num_colors)
-  {
-    menor_lut = img2;
-    maior_lut = img1;
-  }
-
-  for (size_t i = 2; i < menor_lut->num_colors; i++)
-  {
-    uint8 found = 0;
-
-    for (size_t j = 2; j < maior_lut->num_colors; j++)
-    {
-   
-        if (menor_lut->LUT[i] == maior_lut-> LUT[j])
-        {
-          LUT_commum[num_color_comm++] = menor_lut->LUT[i];
-          found=1;
-        }
-
-      if (found == 1) {break;}
-    
-    }
-  }
-*/
   
   //Check pixeis equal
   for (size_t j = 0; j < img1->height; j++)
@@ -649,7 +612,6 @@ int ImageIsEqual(const Image img1, const Image img2) {
     
   }
   
-
   return 1;
 }
 
@@ -680,10 +642,28 @@ int ImageIsDifferent(const Image img1, const Image img2) {
 Image ImageRotate90CW(const Image img) {
   assert(img != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  Image newImg = ImageCreate(img->height,img->width);
 
-  return NULL;
+  //copy num_colors
+  newImg->num_colors = img->num_colors;
+
+  //copy uint32* LUT
+  for (size_t i = 2; i < newImg->num_colors; i++)
+  {
+    newImg->LUT[i] = img->LUT[i];
+  }
+
+  //Rotate Image
+  for (size_t i = 0; i < img->height; i++)
+  {
+    for (size_t j = 0; j < img->width; j++)
+    {
+      newImg->image[i][j] = img->image[img->width-1-j][i];
+    }
+    
+  }
+
+  return newImg;
 }
 
 /// Rotate 180 degrees clockwise (CW).
