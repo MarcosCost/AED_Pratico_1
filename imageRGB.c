@@ -102,6 +102,9 @@ void ImageInit(void) {  ///
 
 // TIP: Search for PIXMEM or InstrCount to see where it is incremented!
 
+
+
+
 /// Auxiliary (static) functions
 
 static Image AllocateImageHeader(uint32 width, uint32 height) {
@@ -168,6 +171,10 @@ static int LUTAllocColor(Image img, rgb_t color) {
 static rgb_t GenerateNextColor(rgb_t color) {
   return (color + 7639) & 0xffffff;         // &0xffffff makes sure it only keeps the first 24 (6*4) bits if overflow occurs 
 }
+
+
+
+
 
 /// Image management functions
 
@@ -308,6 +315,9 @@ Image ImageCopy(const Image img) {
   return newImg;
 }
 
+
+
+
 /// Printing on the console
 
 /// These functions do not modify the image and never fail.
@@ -339,6 +349,8 @@ void ImageRAWPrint(const Image img) {
 
   printf("\n");
 }
+
+
 
 /// PBM file operations --- For BW images
 
@@ -461,6 +473,8 @@ int ImageSavePBM(const Image img, const char* filename) {  ///
   return 0;
 }
 
+
+
 /// PPM file operations --- For RGB images
 
 /// Load a raw PPM file.
@@ -541,6 +555,9 @@ int ImageSavePPM(const Image img, const char* filename) {
   return 0;
 }
 
+
+
+
 /// Information queries
 
 /// These functions do not modify the image and never fail.
@@ -563,6 +580,9 @@ uint16 ImageColors(const Image img) {
   return img->num_colors;
 }
 
+
+
+
 /// Image comparison
 
 /// These functions do not modify the images and never fail.
@@ -570,14 +590,29 @@ uint16 ImageColors(const Image img) {
 /// Check if img1 and img2 represent equal images.
 /// NOTE: The same rgb color may correspond to different LUT labels in
 /// different images!
+
+//returns 1 if equal
 int ImageIsEqual(const Image img1, const Image img2) {
   assert(img1 != NULL);
   assert(img2 != NULL);
 
-  // TO BE COMPLETED
-  // ...
 
-  return 0;
+  if (img1->height != img2->height || img2->width != img1->width)
+  {
+    return 0;
+  }
+  
+  //Check pixeis equal
+  for (size_t j = 0; j < img1->height; j++)
+  {
+    for (size_t i = 0; i < img2->width; i++)
+    {
+      if (img1->LUT[img1->image[j][i]] != img2->LUT[img2->image[j][i]]) {return 0;}
+    }
+    
+  }
+  
+  return 1;
 }
 
 int ImageIsDifferent(const Image img1, const Image img2) {
@@ -586,6 +621,9 @@ int ImageIsDifferent(const Image img1, const Image img2) {
 
   return !ImageIsEqual(img1, img2);
 }
+
+
+
 
 /// Geometric transformations
 
@@ -604,10 +642,28 @@ int ImageIsDifferent(const Image img1, const Image img2) {
 Image ImageRotate90CW(const Image img) {
   assert(img != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  Image newImg = ImageCreate(img->height,img->width);
 
-  return NULL;
+  //copy num_colors
+  newImg->num_colors = img->num_colors;
+
+  //copy uint32* LUT
+  for (size_t i = 2; i < newImg->num_colors; i++)
+  {
+    newImg->LUT[i] = img->LUT[i];
+  }
+
+  //Rotate Image
+  for (size_t i = 0; i < img->height; i++)
+  {
+    for (size_t j = 0; j < img->width; j++)
+    {
+      newImg->image[i][j] = img->image[img->width-1-j][i];
+    }
+    
+  }
+
+  return newImg;
 }
 
 /// Rotate 180 degrees clockwise (CW).
@@ -619,10 +675,27 @@ Image ImageRotate90CW(const Image img) {
 Image ImageRotate180CW(const Image img) {
   assert(img != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  Image newImg = ImageCopy(img);
 
-  return NULL;
+  for (size_t i = 0; i < newImg->height / 2; i++)
+  {
+      // Swap pointers at position i and size-1-i
+      int *temp = newImg->image[i];
+      newImg->image[i] = newImg->image[newImg->height - 1 - i];
+      newImg->image[newImg->height - 1 - i] = temp;
+  }
+
+  for (size_t i = 0; i < newImg->height; i++)
+  {
+      for (size_t j = 0; j < newImg->width / 2; j++)
+      {
+        int temp = newImg->image[i][j];
+        newImg->image[i][j] = newImg->image[i][newImg->width - 1 - j];
+        newImg->image[i][newImg->width - 1 - j] = temp;        
+      }
+  }
+  
+  return newImg;
 }
 
 /// Check whether pixel coords (u, v) are inside img.
