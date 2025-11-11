@@ -675,10 +675,27 @@ Image ImageRotate90CW(const Image img) {
 Image ImageRotate180CW(const Image img) {
   assert(img != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  Image newImg = ImageCopy(img);
 
-  return NULL;
+  for (size_t i = 0; i < newImg->height / 2; i++)
+  {
+      // Swap pointers at position i and size-1-i
+      int *temp = newImg->image[i];
+      newImg->image[i] = newImg->image[newImg->height - 1 - i];
+      newImg->image[newImg->height - 1 - i] = temp;
+  }
+
+  for (size_t i = 0; i < newImg->height; i++)
+  {
+      for (size_t j = 0; j < newImg->width / 2; j++)
+      {
+        int temp = newImg->image[i][j];
+        newImg->image[i][j] = newImg->image[i][newImg->width - 1 - j];
+        newImg->image[i][newImg->width - 1 - j] = temp;        
+      }
+  }
+  
+  return newImg;
 }
 
 /// Check whether pixel coords (u, v) are inside img.
