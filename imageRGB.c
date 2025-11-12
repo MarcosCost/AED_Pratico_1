@@ -728,7 +728,7 @@ int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {        
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
   check(label<img->num_colors,"ImageRegionFillingRecursive: Label is not defined in LUT");
-  check(label>0,"ImageRegionFillingWithQUEUE: Label must be positive");
+  check(label>0,"ImageRegionFillingRecursive: Label must be positive");
 
 
   uint16 og_label = img->image[v][u];
@@ -767,11 +767,58 @@ int ImageRegionFillingWithSTACK(Image img, int u, int v, uint16 label) {
   assert(img != NULL);
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
+  check(label<img->num_colors,"ImageRegionFillingWithSTACK: Label is not defined in LUT");
+  check(label>0,"ImageRegionFillingWithSTACK: Label must be positive");
+  
+  uint16 og_label = img->image[v][u];
+  if(og_label==label)return 0;
 
-  // TO BE COMPLETED
-  // ...
+  uint16 labeled_pixeis = 0;
 
-  return 0;
+  Stack *stack = StackCreate(img->height*img->width);
+  if(stack==NULL)return 0;
+
+  PixelCoords start = PixelCoordsCreate(u,v); 
+
+  StackPush(stack, start);
+  img->image[v][u] = label;
+
+  while (!StackIsEmpty(stack))
+  {
+    PixelCoords curr = StackPop(stack);
+    labeled_pixeis++;
+
+    //neighbour chekcs:
+    ///pixel up (u,v+1)
+    if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
+    { 
+      img->image[curr.v+1][curr.u] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u,curr.v+1) );
+    }
+    ///pixel down (u,v-1)
+    if(ImageIsValidPixel(img,curr.u,curr.v-1) && img->image[curr.v-1][curr.u] == og_label)
+    { 
+      img->image[curr.v-1][curr.u] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u,curr.v-1) );
+    }
+    ///pixel left (u-1,v)
+    if(ImageIsValidPixel(img,curr.u-1,curr.v) && img->image[curr.v][curr.u-1] == og_label)
+    {
+      img->image[curr.v][curr.u-1] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u-1,curr.v) );
+    }
+    ///pixel right (u+1,v)
+    if(ImageIsValidPixel(img,curr.u+1,curr.v) && img->image[curr.v][curr.u+1] == og_label)
+    { 
+      img->image[curr.v][curr.u+1] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u+1,curr.v) );
+    }
+
+  }
+  
+  StackDestroy(stack);
+
+  return labeled_pixeis;
 }
 
 /// Region growing using a QUEUE of pixel coordinates to
@@ -799,6 +846,7 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
   {
     PixelCoords curr = QueueDequeue(queue);
     labeled_pixeis++;
+
     //neighbour chekcs:
     ///pixel up (u,v+1)
     if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
