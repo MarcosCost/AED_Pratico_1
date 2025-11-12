@@ -19,6 +19,9 @@
 #include "imageRGB.h"
 #include "instrumentation.h"
 
+//This was put by me to clear make error flagsa
+void pixmemo(void);
+
 int main(int argc, char* argv[]) {
   program_name = argv[0];
   if (argc != 1) {
@@ -78,5 +81,11 @@ int main(int argc, char* argv[]) {
   ImageDestroy(&image_2);
   ImageDestroy(&image_3);
 
+  printf("\n\nMy testing\n");
+
+  pixmemo();
+  InstrReset();
+  pixmemo();
+  
   return 0;
 }
