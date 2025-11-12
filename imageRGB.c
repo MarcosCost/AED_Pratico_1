@@ -680,7 +680,7 @@ Image ImageRotate180CW(const Image img) {
   for (size_t i = 0; i < newImg->height / 2; i++)
   {
       // Swap pointers at position i and size-1-i
-      int *temp = newImg->image[i];
+      uint16 *temp = newImg->image[i];
       newImg->image[i] = newImg->image[newImg->height - 1 - i];
       newImg->image[newImg->height - 1 - i] = temp;
   }
@@ -728,7 +728,7 @@ int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {        
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
   check(label<img->num_colors,"ImageRegionFillingRecursive: Label is not defined in LUT");
-  check(label>0,"ImageRegionFillingWithQUEUE: Label must be positive");
+  check(label>0,"ImageRegionFillingRecursive: Label must be positive");
 
 
   uint16 og_label = img->image[v][u];
@@ -741,15 +741,15 @@ int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {        
   labeled_p++;
 
   //Recursividade
-  if (v+1 < img->height && img->image[v+1][u] == og_label )
+  if ( (uint32)(v+1) < img->height && img->image[v+1][u] == og_label )
   {
     labeled_p+=ImageRegionFillingRecursive(img, u, v+1, label);
   }
-  if (v-1 >= 0 && img->image[v-1][u] == og_label )
+  if ( v-1 >= 0 && img->image[v-1][u] == og_label )
   {
     labeled_p+=ImageRegionFillingRecursive(img, u, v-1, label);
   }
-  if (u+1 < img->width && img->image[v][u+1] == og_label )
+  if ( (uint32)(u+1) < img->width && img->image[v][u+1] == og_label )
   {
     labeled_p+=ImageRegionFillingRecursive(img, u+1, v, label);
   }
@@ -767,11 +767,58 @@ int ImageRegionFillingWithSTACK(Image img, int u, int v, uint16 label) {
   assert(img != NULL);
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
+  check(label<img->num_colors,"ImageRegionFillingWithSTACK: Label is not defined in LUT");
+  check(label>0,"ImageRegionFillingWithSTACK: Label must be positive");
+  
+  uint16 og_label = img->image[v][u];
+  if(og_label==label)return 0;
 
-  // TO BE COMPLETED
-  // ...
+  uint16 labeled_pixeis = 0;
 
-  return 0;
+  Stack *stack = StackCreate(img->height*img->width);
+  if(stack==NULL)return 0;
+
+  PixelCoords start = PixelCoordsCreate(u,v); 
+
+  StackPush(stack, start);
+  img->image[v][u] = label;
+
+  while (!StackIsEmpty(stack))
+  {
+    PixelCoords curr = StackPop(stack);
+    labeled_pixeis++;
+
+    //neighbour chekcs:
+    ///pixel up (u,v+1)
+    if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
+    { 
+      img->image[curr.v+1][curr.u] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u,curr.v+1) );
+    }
+    ///pixel down (u,v-1)
+    if(ImageIsValidPixel(img,curr.u,curr.v-1) && img->image[curr.v-1][curr.u] == og_label)
+    { 
+      img->image[curr.v-1][curr.u] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u,curr.v-1) );
+    }
+    ///pixel left (u-1,v)
+    if(ImageIsValidPixel(img,curr.u-1,curr.v) && img->image[curr.v][curr.u-1] == og_label)
+    {
+      img->image[curr.v][curr.u-1] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u-1,curr.v) );
+    }
+    ///pixel right (u+1,v)
+    if(ImageIsValidPixel(img,curr.u+1,curr.v) && img->image[curr.v][curr.u+1] == og_label)
+    { 
+      img->image[curr.v][curr.u+1] = label;
+      StackPush(stack, PixelCoordsCreate(curr.u+1,curr.v) );
+    }
+
+  }
+  
+  StackDestroy(&stack);
+
+  return labeled_pixeis;
 }
 
 /// Region growing using a QUEUE of pixel coordinates to
@@ -788,6 +835,7 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
 
   uint16 labeled_pixeis=0;
   Queue *queue = QueueCreate(img->height*img->width);
+  if(queue==NULL)return -1;;
 
   PixelCoords start = PixelCoordsCreate(u,v);
   QueueEnqueue(queue, start);
@@ -798,6 +846,7 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
   {
     PixelCoords curr = QueueDequeue(queue);
     labeled_pixeis++;
+
     //neighbour chekcs:
     ///pixel up (u,v+1)
     if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
@@ -825,10 +874,11 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
     }
   }
   
-  QueueDestroy(queue);
+  QueueDestroy(&queue);
 
   return labeled_pixeis;
 }
+
 
 /// Image Segmentation
 
@@ -844,8 +894,25 @@ int ImageSegmentation(Image img, FillingFunction fillFunct) {
   assert(img != NULL);
   assert(fillFunct != NULL);
 
-  // TO BE COMPLETED
-  // ...
+  uint16 regions=0;
 
-  return 0;
+  rgb_t newcolor = 0xffffff;
+
+  for (uint32 i = 0; i < ImageHeight(img); i++)
+  {
+    for (uint32 j = 0; j < ImageWidth(img); j++)
+    {
+      if (img->image[i][j]== 0 )
+      {
+        regions++;
+        newcolor = GenerateNextColor(newcolor);
+        uint16 lut_ind = LUTAllocColor(img, newcolor);
+        fillFunct(img,j,i,lut_ind);
+      }
+      
+    }
+    
+  }
+
+  return regions;
 }
