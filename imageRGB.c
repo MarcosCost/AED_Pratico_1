@@ -723,15 +723,42 @@ int ImageIsValidPixel(const Image img, int u, int v) {
 /// Each function carries out a different version of the algorithm.
 
 /// Region growing using the recursive flood-filling algorithm.
-int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {
+int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {          //TODO: Preguntar ao stor se é suposto retornar apenas o numero de pixeis alterados, aka se por exemplo og_label = label retornar 0
   assert(img != NULL);
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
+  check(label<img->num_colors,"ImageRegionFillingRecursive: Label is not defined in LUT");
+  check(label>0,"ImageRegionFillingWithQUEUE: Label must be positive");
 
-  // TO BE COMPLETED
-  // ...
 
-  return 0;
+  uint16 og_label = img->image[v][u];
+  uint16 labeled_p = 0;
+
+  //Caso ja seja a cor certa
+  if (og_label == label) return labeled_p;
+
+  img->image[v][u] = label;
+  labeled_p++;
+
+  //Recursividade
+  if (v+1 < img->height && img->image[v+1][u] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u, v+1, label);
+  }
+  if (v-1 >= 0 && img->image[v-1][u] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u, v-1, label);
+  }
+  if (u+1 < img->width && img->image[v][u+1] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u+1, v, label);
+  }
+  if (u-1 >= 0 && img->image[v][u-1] == og_label )
+  {
+    labeled_p+=ImageRegionFillingRecursive(img, u-1, v, label);
+  }
+
+  return labeled_p;
 }
 
 /// Region growing using a STACK of pixel coordinates to
@@ -753,11 +780,54 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
   assert(img != NULL);
   assert(ImageIsValidPixel(img, u, v));
   assert(label < FIXED_LUT_SIZE);
+  check(label<img->num_colors,"ImageRegionFillingWithQUEUE: Label is not defined in LUT");
+  check(label>0,"ImageRegionFillingWithQUEUE: Label must be positive");
 
-  // TO BE COMPLETED
-  // ...
+  uint16 og_label = img->image[v][u];
+  if(og_label==label) return 0;
 
-  return 0;
+  uint16 labeled_pixeis=0;
+  Queue *queue = QueueCreate(img->height*img->width);
+
+  PixelCoords start = PixelCoordsCreate(u,v);
+  QueueEnqueue(queue, start);
+  img->image[v][u] = label;
+
+  //Enquanto a queue n estiver vazia, tiramos a head dela e checkamos se ela tem algum adjacente que possa ser adicionado a queue (alterar o label antes de dar queue para evitar duplicates)
+  while (!QueueIsEmpty(queue))
+  {
+    PixelCoords curr = QueueDequeue(queue);
+    labeled_pixeis++;
+    //neighbour chekcs:
+    ///pixel up (u,v+1)
+    if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
+    { 
+      img->image[curr.v+1][curr.u] = label;
+      QueueEnqueue(queue, PixelCoordsCreate(curr.u,curr.v+1) ); 
+    }
+    ///pixel down (u,v-1)
+    if(ImageIsValidPixel(img,curr.u,curr.v-1) && img->image[curr.v-1][curr.u] == og_label)
+    { 
+      img->image[curr.v-1][curr.u] = label;
+      QueueEnqueue(queue, PixelCoordsCreate(curr.u,curr.v-1) ); 
+    }
+    ///pixel left (u-1,v)
+    if(ImageIsValidPixel(img,curr.u-1,curr.v) && img->image[curr.v][curr.u-1] == og_label)
+    {
+      img->image[curr.v][curr.u-1] = label;
+      QueueEnqueue(queue, PixelCoordsCreate(curr.u-1,curr.v) ); 
+    }
+    ///pixel right (u+1,v)
+    if(ImageIsValidPixel(img,curr.u+1,curr.v) && img->image[curr.v][curr.u+1] == og_label)
+    { 
+      img->image[curr.v][curr.u+1] = label;
+      QueueEnqueue(queue, PixelCoordsCreate(curr.u+1,curr.v) ); 
+    }
+  }
+  
+  QueueDestroy(queue);
+
+  return labeled_pixeis;
 }
 
 /// Image Segmentation
