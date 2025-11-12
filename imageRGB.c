@@ -788,6 +788,7 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
 
   uint16 labeled_pixeis=0;
   Queue *queue = QueueCreate(img->height*img->width);
+  if(queue==NULL)return -1;;
 
   PixelCoords start = PixelCoordsCreate(u,v);
   QueueEnqueue(queue, start);
