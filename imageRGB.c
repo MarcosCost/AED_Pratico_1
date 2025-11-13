@@ -931,7 +931,7 @@ int ImageSegmentation(Image img, FillingFunction fillFunct) {
         regions++;
         newcolor = GenerateNextColor(newcolor);
         uint16 lut_ind = LUTAllocColor(img, newcolor);
-        fillFunct(img,i,j,lut_ind);
+        fillFunct(img,j,i,lut_ind);
       }
       
     }
