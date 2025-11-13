@@ -92,7 +92,7 @@ static void check(int condition, const char* failmsg) {
 /// Currently, simply calibrate instrumentation and set names of counters.
 void ImageInit(void) {  ///
   InstrCalibrate();
-  InstrName[0] = "pixmem";  // InstrCount[0] will count pixel array acesses
+  InstrName[0] = "pixmem";  // InstrCount[0] will count pixel array acesses     //TODO: ask if instrumentation should count pixel acess of unaltered functions  
   // Name other counters here...
 }
 
@@ -102,7 +102,11 @@ void ImageInit(void) {  ///
 
 // TIP: Search for PIXMEM or InstrCount to see where it is incremented!
 
-
+//TODO: remove before Submit, or find another way to acess PIXMEM in test
+void pixmemo(){
+  printf("Pixmem: %ld\n",PIXMEM);
+  return;
+}
 
 
 /// Auxiliary (static) functions
@@ -299,6 +303,7 @@ Image ImageCopy(const Image img) {
     for (uint32 j = 0; j < newImg->width; j++)
     {
       newImg->image[i][j] = img->image[i][j];
+      PIXMEM += 2; //Acess pixel of img and newimg 
     }
     
   }
@@ -607,6 +612,7 @@ int ImageIsEqual(const Image img1, const Image img2) {
   {
     for (size_t i = 0; i < img2->width; i++)
     {
+      PIXMEM += 2; //Acess pixel of img1 and img 2
       if (img1->LUT[img1->image[j][i]] != img2->LUT[img2->image[j][i]]) {return 0;}
     }
     
@@ -658,7 +664,8 @@ Image ImageRotate90CW(const Image img) {
   {
     for (size_t j = 0; j < img->width; j++)
     {
-      newImg->image[i][j] = img->image[img->width-1-j][i];
+      PIXMEM += 2; //Acess pixel of img and newImg
+      newImg->image[j][img->height - 1 - i] = img->image[i][j];
     }
     
   }
@@ -692,6 +699,7 @@ Image ImageRotate180CW(const Image img) {
         int temp = newImg->image[i][j];
         newImg->image[i][j] = newImg->image[i][newImg->width - 1 - j];
         newImg->image[i][newImg->width - 1 - j] = temp;        
+        PIXMEM += 4; 
       }
   }
   
@@ -738,23 +746,28 @@ int ImageRegionFillingRecursive(Image img, int u, int v, uint16 label) {        
   if (og_label == label) return labeled_p;
 
   img->image[v][u] = label;
+  PIXMEM++;
   labeled_p++;
 
   //Recursividade
   if ( (uint32)(v+1) < img->height && img->image[v+1][u] == og_label )
   {
+    PIXMEM++;
     labeled_p+=ImageRegionFillingRecursive(img, u, v+1, label);
   }
   if ( v-1 >= 0 && img->image[v-1][u] == og_label )
   {
+    PIXMEM++;
     labeled_p+=ImageRegionFillingRecursive(img, u, v-1, label);
   }
   if ( (uint32)(u+1) < img->width && img->image[v][u+1] == og_label )
   {
+    PIXMEM++;
     labeled_p+=ImageRegionFillingRecursive(img, u+1, v, label);
   }
   if (u-1 >= 0 && img->image[v][u-1] == og_label )
   {
+    PIXMEM++;
     labeled_p+=ImageRegionFillingRecursive(img, u-1, v, label);
   }
 
@@ -782,6 +795,7 @@ int ImageRegionFillingWithSTACK(Image img, int u, int v, uint16 label) {
 
   StackPush(stack, start);
   img->image[v][u] = label;
+  PIXMEM++;
 
   while (!StackIsEmpty(stack))
   {
@@ -792,24 +806,28 @@ int ImageRegionFillingWithSTACK(Image img, int u, int v, uint16 label) {
     ///pixel up (u,v+1)
     if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
     { 
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v+1][curr.u] = label;
       StackPush(stack, PixelCoordsCreate(curr.u,curr.v+1) );
     }
     ///pixel down (u,v-1)
     if(ImageIsValidPixel(img,curr.u,curr.v-1) && img->image[curr.v-1][curr.u] == og_label)
     { 
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v-1][curr.u] = label;
       StackPush(stack, PixelCoordsCreate(curr.u,curr.v-1) );
     }
     ///pixel left (u-1,v)
     if(ImageIsValidPixel(img,curr.u-1,curr.v) && img->image[curr.v][curr.u-1] == og_label)
     {
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v][curr.u-1] = label;
       StackPush(stack, PixelCoordsCreate(curr.u-1,curr.v) );
     }
     ///pixel right (u+1,v)
     if(ImageIsValidPixel(img,curr.u+1,curr.v) && img->image[curr.v][curr.u+1] == og_label)
     { 
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v][curr.u+1] = label;
       StackPush(stack, PixelCoordsCreate(curr.u+1,curr.v) );
     }
@@ -840,6 +858,7 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
   PixelCoords start = PixelCoordsCreate(u,v);
   QueueEnqueue(queue, start);
   img->image[v][u] = label;
+  PIXMEM++;
 
   //Enquanto a queue n estiver vazia, tiramos a head dela e checkamos se ela tem algum adjacente que possa ser adicionado a queue (alterar o label antes de dar queue para evitar duplicates)
   while (!QueueIsEmpty(queue))
@@ -851,24 +870,28 @@ int ImageRegionFillingWithQUEUE(Image img, int u, int v, uint16 label) {
     ///pixel up (u,v+1)
     if(ImageIsValidPixel(img,curr.u,curr.v+1) && img->image[curr.v+1][curr.u] == og_label)
     { 
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v+1][curr.u] = label;
       QueueEnqueue(queue, PixelCoordsCreate(curr.u,curr.v+1) ); 
     }
     ///pixel down (u,v-1)
     if(ImageIsValidPixel(img,curr.u,curr.v-1) && img->image[curr.v-1][curr.u] == og_label)
     { 
+      PIXMEM+=2;//Checking and settingPIXMEM+=2;//Checking and setting
       img->image[curr.v-1][curr.u] = label;
       QueueEnqueue(queue, PixelCoordsCreate(curr.u,curr.v-1) ); 
     }
     ///pixel left (u-1,v)
     if(ImageIsValidPixel(img,curr.u-1,curr.v) && img->image[curr.v][curr.u-1] == og_label)
     {
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v][curr.u-1] = label;
       QueueEnqueue(queue, PixelCoordsCreate(curr.u-1,curr.v) ); 
     }
     ///pixel right (u+1,v)
     if(ImageIsValidPixel(img,curr.u+1,curr.v) && img->image[curr.v][curr.u+1] == og_label)
     { 
+      PIXMEM+=2;//Checking and setting
       img->image[curr.v][curr.u+1] = label;
       QueueEnqueue(queue, PixelCoordsCreate(curr.u+1,curr.v) ); 
     }
@@ -904,6 +927,7 @@ int ImageSegmentation(Image img, FillingFunction fillFunct) {
     {
       if (img->image[i][j]== 0 )
       {
+        PIXMEM++;
         regions++;
         newcolor = GenerateNextColor(newcolor);
         uint16 lut_ind = LUTAllocColor(img, newcolor);

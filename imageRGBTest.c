@@ -19,6 +19,9 @@
 #include "imageRGB.h"
 #include "instrumentation.h"
 
+//This was put by me to clear make error flagsa
+void pixmemo(void);
+
 int main(int argc, char* argv[]) {
   program_name = argv[0];
   if (argc != 1) {
@@ -77,6 +80,74 @@ int main(int argc, char* argv[]) {
   ImageDestroy(&image_1);
   ImageDestroy(&image_2);
   ImageDestroy(&image_3);
+  
+  printf("\n\nMy testing\n");
+
+
+  printf("\n\n9) Image Load\n");
+  Image load = ImageLoadPPM("img/feep.ppm");
+  printf("Image loaded:\n");
+  ImageRAWPrint(load);
+
+
+  printf("\n10) Image Copied\n");
+  Image copy = ImageCopy(load);
+  ImageSavePPM(copy, "img/feep_coopy.ppm");
+  printf("Image Copied:\n");
+  ImageRAWPrint(copy);
+
+
+  printf("\n11) Image is equal\n");  
+  if (ImageIsEqual(load, copy)==1)
+  {
+    printf("Feep and Feep_copy are equal\n");
+  } else {printf("Is equal aint work u dumb ash\n");}
+
+
+  printf("\n12) Image Rotate 90\n");
+  Image rotate90 = ImageRotate90CW(load);
+  ImageSavePPM(rotate90, "img/feep_rotate90.ppm");
+  ImageRAWPrint(rotate90);
+
+  printf("\n13) Image Rotate 180\n");
+  Image rotate180 = ImageRotate180CW(load);
+  ImageSavePPM(rotate180, "img/feep_rotate180.ppm");
+  ImageRAWPrint(rotate180);
+
+  //Region FIlling
+  printf("\n14) Image Recursive Fill\n");
+  Image recursive = ImageCopy(load);
+  ImageRegionFillingRecursive(recursive,1,1,4);
+  ImageSavePPM(recursive, "img/feep_recursive.ppm");  
+  ImageRAWPrint(recursive);
+
+  printf("\n15) Image QUEUE Fill\n");
+  Image queue = ImageCopy(load);
+  ImageRegionFillingWithQUEUE(queue, 1,1,4);
+  ImageSavePPM(queue, "img/feep_queue.ppm");
+  ImageRAWPrint(queue);
+
+  printf("\n16) Image STACK Fill\n");
+  Image stack = ImageCopy(load);
+  ImageRegionFillingWithSTACK(stack,1,1,4);
+  ImageSavePPM(stack, "img/feep_stack.ppm");
+  ImageRAWPrint(stack);
+
+  //ImageSegmentation
+  printf("\n17) Image Segmentation 180\n");
+  Image segmentation = ImageCopy(load);
+  ImageSegmentation(segmentation,ImageRegionFillingWithQUEUE);
+  ImageSavePPM(segmentation, "img/feep_segmentation.ppm");
+  ImageRAWPrint(segmentation);
+
+  ImageDestroy(&load);
+  ImageDestroy(&copy);
+  ImageDestroy(&rotate90);
+  ImageDestroy(&rotate180);
+  ImageDestroy(&recursive);
+  ImageDestroy(&queue);
+  ImageDestroy(&stack);
+  ImageDestroy(&segmentation);
 
   return 0;
 }

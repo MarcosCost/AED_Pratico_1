@@ -1,3 +1,4 @@
 ##Add any files/folders u dont wanna track like .pdf, vs configs, etc...
 /.vscode
 /Altered_Function.md
+/.clean.sh
