@@ -665,7 +665,7 @@ Image ImageRotate90CW(const Image img) {
     for (size_t j = 0; j < img->width; j++)
     {
       PIXMEM += 2; //Acess pixel of img and newImg
-      newImg->image[i][j] = img->image[img->width-1-j][i];
+      newImg->image[j][img->height - 1 - i] = img->image[i][j];
     }
     
   }
@@ -931,7 +931,7 @@ int ImageSegmentation(Image img, FillingFunction fillFunct) {
         regions++;
         newcolor = GenerateNextColor(newcolor);
         uint16 lut_ind = LUTAllocColor(img, newcolor);
-        fillFunct(img,j,i,lut_ind);
+        fillFunct(img,i,j,lut_ind);
       }
       
     }
